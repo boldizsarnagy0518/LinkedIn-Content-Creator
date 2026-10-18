@@ -1,189 +1,148 @@
-# LinkedIn Content Creator
+# ContentOps
 
-AI-powered LinkedIn content workflow app for turning rough ideas into polished, authentic LinkedIn posts.
+**Magyar útmutatók:** [Használat](docs/HASZNALATI_UTMUTATO.md) · [Telepítés és ChatGPT-bekötés](docs/DEPLOYMENT_HU.md) · [Kitölthető telepítési csomag](deploy/README.md) · [Első próba](docs/FIRST_TRIAL_HU.md).
 
-The goal is not to build a simple AI post generator, but a small product-like workflow system:
+ContentOps is a private editorial workspace for turning raw ideas and sourced research into reviewed, versioned LinkedIn drafts. It is both a useful single-owner application and a portfolio project built around production Python, MCP, TypeScript, Supabase, and Vercel.
 
-```text
-Idea capture → AI draft → critique/revision → approval → save/schedule → content memory
-```
+The application deliberately does **not** contain an LLM provider. ChatGPT or Codex performs research and writing; ContentOps owns durable workflow state, exact-version approval, audit history, and a human-controlled LinkedIn handoff.
 
-## Why this project exists
+## Product flow
 
-I wanted a more consistent way to publish weekly LinkedIn posts while building a personal brand around Data Engineering, AI workflows, university learnings, and career growth.
+For a walking note, choose **Mentés későbbre** to keep only the idea, or **Mentés és draftkérés** to save it and copy a prepared request into your connected ChatGPT conversation. Send that request there: the host reads the saved idea and writing context through MCP, writes the full draft, and saves a new version. The workspace refreshes on focus and every 15 seconds while visible. Review and approval remain explicit user actions.
 
-This app is designed to:
-
-- capture rough thoughts anytime,
-- remind me when I have not prepared content for the week,
-- generate LinkedIn-style English drafts from Hungarian or English notes,
-- support revision loops with human feedback,
-- save approved posts,
-- later use previous posts as personal brand memory.
-
-## Current MVP
-
-This initial version includes:
-
-- Next.js App Router setup
-- TypeScript
-- Tailwind CSS
-- clean dashboard UI
-- idea input flow
-- server-side draft generation endpoint
-- Gemini API integration
-- safe mock fallback when no API key is configured
-- local browser history for saved drafts
-- `.env.example`
-- implementation roadmap
-
-## Planned production architecture
+The web button prepares a handoff; it does not start a background ChatGPT job. No model API key or separate model-provider billing is used by this application. A working host MCP connection is required and must be tested in the target account. See [the workflow guide](docs/MCP_IDEA_WORKFLOW.md).
 
 ```text
-Frontend:        Next.js + TypeScript
-UI:              Tailwind CSS
-Backend:         Next.js API routes / Server Actions
-Auth:            Supabase Auth
-Database:        Supabase Postgres
-Vector memory:   Supabase pgvector
-LLM:             Gemini API
-Workflow:        LangGraph.js
-Scheduler:       Vercel Cron
-Email:           Resend
-Hosting:         Vercel
+idea or sourced research
+  -> immutable draft versions
+  -> feedback or exact-version approval
+  -> internal publication plan
+  -> user schedules in LinkedIn
+  -> manual confirmation and performance snapshot
 ```
 
-## Core workflow
+Approval never publishes a post. ContentOps does not scrape LinkedIn, automate its website, or automate engagement.
 
-```text
-1. User adds a rough idea
-2. App generates 3 hook options + final LinkedIn post
-3. User can revise, approve, save, or copy the post
-4. Approved posts are stored in content history
-5. Weekly reminder checks whether this week already has an idea/draft
-6. Later: previous posts are embedded and reused as personal brand memory
+## Architecture
+
+```mermaid
+flowchart LR
+  Host["ChatGPT / Codex"] -->|"MCP tools"| MCP["Python MCP server"]
+  Web["Next.js workspace"] -->|"authenticated BFF"| API["FastAPI"]
+  MCP --> Domain["ContentWorkflowService"]
+  API --> Domain
+  Domain --> Repo["Repository port"]
+  Repo --> SQLite["SQLite local"]
+  Repo --> Postgres["Supabase Postgres production"]
+  Web --> Auth["Supabase Auth"]
+  API --> Auth
+  MCP --> Auth
 ```
 
-## Getting started
+The Python application service is the use-case boundary. FastAPI and MCP are adapters over the same service and repository protocol. The Next.js app uses one typed client through a same-origin BFF; it does not duplicate workflow rules.
 
-Clone the repository:
+## Implemented
 
-```bash
-git clone https://github.com/boldizsarnagy0518/LinkedIn_Content_Creator.git
-cd LinkedIn_Content_Creator
+- idea and sourced-research capture;
+- immutable draft versions with SHA-256 hashes;
+- revision feedback and exact-current-version approval;
+- approval revocation and archive state;
+- durable voice, audience, and language profile;
+- internal planning, native-scheduler confirmation, publication confirmation, and manual metrics;
+- audit events, idempotent writes, JSON workspace export;
+- 18 MCP tools and a reusable workflow skill;
+- durable professional background and a curated library of up to 50 authentic past posts, with per-post example selection;
+- SQLite development and Postgres production adapters;
+- local auth mode and Supabase JWT owner verification;
+- responsive editorial workspace, Supabase login, and installable PWA shell.
+
+## Local development
+
+Requirements: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node.js 22+, npm.
+
+```powershell
+cd backend
+uv sync
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
-Install dependencies:
+In a second terminal:
 
-```bash
+```powershell
 npm install
-```
-
-Create an environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-Add your Gemini API key:
-
-```bash
-GEMINI_API_KEY=your_google_ai_studio_key
-```
-
-Run locally:
-
-```bash
 npm run dev
 ```
 
-Open:
+Open `http://localhost:3000`. Local mode uses `backend/.data/contentops.db` and requires no cloud credentials.
 
-```text
-http://localhost:3000
+Run the local MCP server over stdio:
+
+```powershell
+cd backend
+uv run python -m app.mcp_server --transport stdio
 ```
 
-## Environment variables
+Or expose its HTTP transport locally:
 
-```bash
-GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
+```powershell
+uv run python -m app.mcp_server --transport streamable-http
 ```
 
-If `GEMINI_API_KEY` is missing, the app returns a mock AI response so the UI remains testable.
+## Configuration
 
-## MVP user stories
+Copy the example values into untracked `.env.local` and `backend/.env` files as needed.
 
-- As a user, I can write a rough content idea in Hungarian or English.
-- As a user, I can generate an English LinkedIn draft.
-- As a user, I can get multiple hook options.
-- As a user, I can save generated posts locally.
-- As a user, I can copy the final post to LinkedIn manually.
+Frontend:
 
-## Roadmap
+```dotenv
+PYTHON_BACKEND_URL=http://localhost:8000
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
 
-### Phase 1 — Local MVP
+Python production mode:
 
-- [x] Project setup
-- [x] Landing/dashboard UI
-- [x] Idea input
-- [x] Gemini generation endpoint
-- [x] Mock fallback
-- [x] Local saved drafts
+```dotenv
+CONTENTOPS_DATABASE_URL=postgresql://...
+AUTH_MODE=supabase
+SUPABASE_URL=https://PROJECT.supabase.co
+SUPABASE_JWT_AUDIENCE=authenticated
+CONTENTOPS_OWNER_USER_ID=SUPABASE_USER_UUID
+MCP_PUBLIC_URL=https://api.example.com/mcp
+FRONTEND_ORIGIN=https://app.example.com
+```
 
-### Phase 2 — Persistent data
+`CONTENTOPS_OWNER_USER_ID` intentionally enforces a single-owner MVP. Multi-tenancy is not simulated with incomplete row filtering.
 
-- [ ] Supabase project setup
-- [ ] Supabase Auth
-- [ ] Postgres schema
-- [ ] Row Level Security policies
-- [ ] Save posts to database
-- [ ] Save post versions
+## Verification
 
-### Phase 3 — Weekly automation
+```powershell
+npm run check
+cd backend
+uv run ruff check app tests
+uv run pytest
+```
 
-- [ ] Posting preferences
-- [ ] Vercel Cron endpoint
-- [ ] Weekly reminder logic
-- [ ] Resend email integration
-- [ ] Notification logs
+Current automated coverage includes API lifecycle, retry idempotency, concurrent writes, stale-version rejection, editor recovery, asynchronous workspace refresh, exact-version approval, MCP contracts, and cross-surface persistence. CI also runs the repository lifecycle against PostgreSQL 17. Locally, that test skips unless a dedicated `CONTENTOPS_TEST_DATABASE_URL` is supplied; it creates and drops only its own random test schema.
 
-### Phase 4 — AI workflow quality
+## Deployment boundary
 
-- [ ] Critic node
-- [ ] Revision endpoint
-- [ ] LangGraph.js workflow
-- [ ] Human-in-the-loop state handling
-- [ ] AI-sounding risk scoring
+Follow [the deployment and ChatGPT setup guide (Hungarian)](docs/DEPLOYMENT_HU.md). It includes the Docker entrypoint, private storage schema, OAuth consent UI, dedicated client registration and resource-bound token hook.
 
-### Phase 5 — Personal brand memory
+The repository is deployment-ready, but account-owned setup remains external:
 
-- [ ] Supabase pgvector
-- [ ] Embeddings for approved posts
-- [ ] Similar previous post retrieval
-- [ ] Anti-repetition logic
-- [ ] Topic balance insights
+1. Create Supabase Postgres and Auth resources; create the owner account and record its user UUID.
+2. Deploy the combined Python ASGI application using `backend/Dockerfile`: API at `/api`, MCP at `/mcp`, readiness at `/api/ready`.
+3. Deploy Next.js to Vercel with Supabase variables, server-only owner/client IDs, and the Python backend URL ending in `/api`.
+4. Change `plugins/contentops-mcp/.mcp.json` to the HTTPS MCP endpoint for remote installation.
+5. Run the cases in `docs/MCP_EVALUATION.md` in the target ChatGPT/Codex account.
 
-### Phase 6 — Optional LinkedIn integration
+## Project map
 
-- [ ] LinkedIn OAuth research
-- [ ] Manual publishing fallback
-- [ ] API publishing experiment
-- [ ] Scheduled publishing via app-side cron
-
-## Product principle
-
-> Build a personal content workflow system, not just a LinkedIn post generator.
-
-## Portfolio value
-
-This project demonstrates:
-
-- full-stack app development,
-- AI workflow design,
-- LLM API integration,
-- human-in-the-loop product thinking,
-- data model planning,
-- future vector memory architecture,
-- automation with scheduled jobs,
-- practical personal branding use case.
+- `backend/app/content/`: domain models, repository port/adapters, application service, API models and routes
+- `backend/app/mcp_server.py`: MCP adapter and tool contracts
+- `backend/app/auth.py`: local and Supabase JWT authentication
+- `app/`: Next.js workspace, auth callback, BFF, PWA metadata
+- `plugins/contentops-mcp/`: installable plugin manifest and workflow skill
+- `docs/LINKEDIN_COMPLIANCE.md`: active LinkedIn safety boundary
+- `documentations/ADR.md`: current architecture decisions

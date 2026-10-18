@@ -1,106 +1,62 @@
-# Python Backend
+# ContentOps Python backend
 
-This folder contains the FastAPI backend for LinkedIn Content Creator.
+The backend is the product core. It stores workflow state and exposes the same use cases through FastAPI and MCP; it does not call an LLM.
 
-The backend is responsible for:
-
-- receiving rough content ideas,
-- building the LinkedIn generation prompt,
-- calling Gemini when configured,
-- returning structured post drafts,
-- falling back to mock generation when no model key is configured.
-
-## Setup
-
-From the repository root:
-
-```bash
-cd backend
-python -m venv .venv
-```
-
-Activate the virtual environment.
-
-Windows PowerShell:
-
-```bash
-.venv\Scripts\Activate.ps1
-```
-
-macOS/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Run the API
-
-```bash
-uvicorn app.main:app --reload --port 8000
-```
-
-Health check:
+## Layers
 
 ```text
-http://localhost:8000/health
+FastAPI routes       MCP tools
+       \              /
+        ContentWorkflowService
+                  |
+          ContentRepository
+             /         \
+         SQLite       Postgres
 ```
 
-Interactive API docs:
+- `app/content/models.py`: domain and response models
+- `app/content/ports.py`: repository protocol
+- `app/content/service.py`: application use cases
+- `app/content/repository.py`: SQL adapters and state invariants
+- `app/content/api.py`: HTTP adapter
+- `app/mcp_server.py`: MCP adapter
+- `app/auth.py`: local identity and Supabase JWT verification
 
-```text
-http://localhost:8000/docs
+## Run
+
+```powershell
+uv sync
+uv run uvicorn app.main:app --reload --port 8000
+uv run python -m app.mcp_server --transport stdio
 ```
 
-## Optional model configuration
+The HTTP MCP transport defaults to `127.0.0.1:8001/mcp`:
 
-The backend works without model configuration because it has a mock fallback.
-
-To use Gemini, create a local `.env` file inside the `backend` folder and add your Google AI Studio key using the variable expected in `app/config.py`.
-
-Do not commit local `.env` files.
-
-## API endpoints
-
-### `GET /health`
-
-Returns service status.
-
-### `POST /generate`
-
-Request body:
-
-```json
-{
-  "idea": "I want to write about why reliable data pipelines matter more than trendy tools.",
-  "tone": "personal, concise, professional",
-  "target_audience": "data engineers and analytics professionals"
-}
+```powershell
+uv run python -m app.mcp_server --transport streamable-http
 ```
 
-Response body:
+## Test
 
-```json
-{
-  "hooks": ["hook 1", "hook 2", "hook 3"],
-  "post": "final LinkedIn post",
-  "hashtags": ["DataEngineering", "Analytics"],
-  "first_comment": "optional first comment",
-  "model": "model-name",
-  "used_mock": false
-}
+```powershell
+uv run ruff check app tests
+uv run pytest
 ```
 
-## Why Python backend?
+## Environment
 
-The project keeps Next.js for the frontend and uses Python for AI/backend logic because:
+Local defaults need no `.env`. Production uses:
 
-- the owner is stronger in Python,
-- Python is a natural fit for AI workflows,
-- later LangGraph integration will be easier,
-- future data and vector memory logic will fit well into this backend.
+```dotenv
+CONTENTOPS_DATABASE_URL=postgresql://...
+AUTH_MODE=supabase
+SUPABASE_URL=https://PROJECT.supabase.co
+SUPABASE_JWT_AUDIENCE=authenticated
+CONTENTOPS_OWNER_USER_ID=SUPABASE_USER_UUID
+MCP_PUBLIC_URL=https://api.example.com/mcp
+FRONTEND_ORIGIN=https://app.example.com
+```
+
+Both transports must point to the same database. Production requests are accepted only when a valid Supabase token belongs to the configured owner UUID.
+
+For hosted use, follow [the complete deployment guide](../docs/DEPLOYMENT_HU.md). `app.deployment:create_app --factory` combines both transports and preserves their lifespans. The Docker image defaults to `APP_ENV=production` and requires `MCP_OAUTH_CLIENT_ID` in addition to the settings above. MCP validates its own URL as the token audience; the web API keeps the `authenticated` audience. Configure the provided Supabase token hook before connecting ChatGPT.
