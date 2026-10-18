@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
+import { ServiceWorkerRegister } from "@/app/_components/service-worker-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LinkedIn Content Creator",
-  description: "AI-powered LinkedIn content workflow app"
+  title: { default: "ContentOps", template: "%s | ContentOps" },
+  description: "A durable, human-controlled editorial workflow for LinkedIn content.",
+  applicationName: "ContentOps"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="hu">
+      <body>{children}<ServiceWorkerRegister /></body>
     </html>
   );
 }
