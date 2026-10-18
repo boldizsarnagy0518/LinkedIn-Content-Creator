@@ -1,21 +1,17 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 
 
-class GeneratePostRequest(BaseModel):
-    idea: str = Field(..., min_length=3, description="Raw content idea from the user")
-    tone: str | None = Field(default=None, description="Optional tone override")
-    target_audience: str | None = Field(default=None, description="Optional target audience")
+class ApiModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
-class DraftResponse(BaseModel):
-    hooks: list[str]
-    post: str
-    hashtags: list[str]
-    first_comment: str | None = None
-    model: str
-    used_mock: bool = False
-
-
-class HealthResponse(BaseModel):
+class HealthResponse(ApiModel):
     status: str
     service: str
+    database: str
+
+
+class ApiErrorResponse(ApiModel):
+    error: str
+    code: str
+    request_id: str
