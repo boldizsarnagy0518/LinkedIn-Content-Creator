@@ -1,0 +1,4 @@
+interface:
+  display_name: "Content workflow"
+  short_description: "Capture, review, approve, and hand off content"
+  default_prompt: "Use $manage-content-workflow to turn this idea into a reviewable draft."

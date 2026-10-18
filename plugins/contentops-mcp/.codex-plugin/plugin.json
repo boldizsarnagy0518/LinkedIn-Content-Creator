@@ -1,0 +1,33 @@
+{
+  "name": "contentops-mcp",
+  "version": "1.0.0+codex.20260816",
+  "description": "Turn ideas and researched briefs into durable, reviewable, approval-safe content workflows.",
+  "author": {
+    "name": "ContentOps contributors"
+  },
+  "keywords": [
+    "content",
+    "writing",
+    "review",
+    "approval",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "ContentOps",
+    "shortDescription": "Capture, review, approve, and hand off content",
+    "longDescription": "A model-independent content workflow for ideas, researched briefs, immutable draft versions, feedback, durable writing context, exact-version approval, and human-confirmed publication handoff.",
+    "developerName": "ContentOps contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Turn this raw idea into a reviewable draft.",
+      "Research this topic and prepare a sourced draft.",
+      "Show the drafts that are waiting for my review."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}
