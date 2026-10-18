@@ -60,6 +60,8 @@ export type PublicationPlan = {
   timezone: string;
   status: PublicationPlanStatus;
   externalConfirmationNote: string | null;
+  publishedAt: string | null;
+  postUrl: string | null;
   createdAt: string;
   updatedAt: string;
 };

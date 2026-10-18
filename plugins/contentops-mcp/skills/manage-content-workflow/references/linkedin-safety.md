@@ -11,6 +11,7 @@ The MVP is draft-and-handoff, not unattended publishing.
 - Use `contentops_set_publication_plan` only for the current exactly approved version. Its `planned` state is internal and performs no network action.
 - Use `contentops_confirm_external_schedule` only after explicit user confirmation of native scheduling.
 - Use `contentops_mark_published` only after explicit user confirmation that the post is live.
+- Use `contentops_record_direct_publication` only when the user confirms they already posted the current exactly approved version without a plan. Store a post link only if the user supplied it; never open or verify it.
 - Treat a cancelled publication plan as stale. Never restore it without a fresh exact-version approval and new plan.
 
 If a future official publishing integration is added, keep it behind separate authorization, a fresh confirmation step, an audit record, rate limits, and a kill switch. Re-check current LinkedIn terms and product access before enabling it.

@@ -383,10 +383,59 @@ def create_mcp_server(
             str | None,
             Field(max_length=2_000, description="Optional user-supplied publication confirmation."),
         ] = None,
+        post_url: Annotated[
+            str | None,
+            Field(max_length=2_000, description="Optional https://www.linkedin.com/... link the user supplied."),
+        ] = None,
     ) -> ContentItemDetail:
         return service.mark_published(
             content_item_id=content_item_id,
             plan_id=plan_id,
+            confirmation_note=confirmation_note,
+            post_url=post_url,
+            idempotency_key=idempotency_key,
+        )
+
+    @server.tool(
+        name="contentops_record_direct_publication",
+        title="Record a post published without a plan",
+        description=(
+            "Use only after the user confirms they already published the current exactly approved version in "
+            "LinkedIn, with no earlier publication plan. Records that fact and an optional user-supplied post link; "
+            "it never opens, reads, or operates LinkedIn. For a future post, use contentops_set_publication_plan."
+        ),
+        annotations=SAFE_INTERNAL_WRITE,
+    )
+    def record_direct_publication(
+        content_item_id: Annotated[str, Field(min_length=1, description="The content item identifier.")],
+        version_id: Annotated[str, Field(min_length=1, description="The current approved version identifier.")],
+        timezone: Annotated[
+            str,
+            Field(min_length=1, max_length=100, description="IANA timezone, for example Europe/Budapest."),
+        ],
+        idempotency_key: Annotated[
+            str,
+            Field(min_length=8, max_length=128, description="A unique key reused only when retrying this same write."),
+        ],
+        published_at: Annotated[
+            datetime | None,
+            Field(description="When the user published it, with UTC offset. Defaults to now; never in the future."),
+        ] = None,
+        post_url: Annotated[
+            str | None,
+            Field(max_length=2_000, description="Optional https://www.linkedin.com/... link the user supplied."),
+        ] = None,
+        confirmation_note: Annotated[
+            str | None,
+            Field(max_length=2_000, description="Optional user-supplied publication confirmation."),
+        ] = None,
+    ) -> ContentItemDetail:
+        return service.record_direct_publication(
+            content_item_id=content_item_id,
+            version_id=version_id,
+            timezone=timezone,
+            published_at=published_at,
+            post_url=post_url,
             confirmation_note=confirmation_note,
             idempotency_key=idempotency_key,
         )

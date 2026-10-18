@@ -9,6 +9,7 @@ from app.content.api_models import (
     CaptureResearchRequest,
     ConfirmExternalScheduleRequest,
     MarkPublishedRequest,
+    RecordDirectPublicationRequest,
     RecordPerformanceSnapshotRequest,
     RequestChangesRequest,
     SaveDraftVersionRequest,
@@ -177,6 +178,24 @@ def mark_published(
     return service.mark_published(
         content_item_id=content_item_id,
         plan_id=request.plan_id,
+        confirmation_note=request.confirmation_note,
+        post_url=request.post_url,
+        idempotency_key=request.idempotency_key,
+    )
+
+
+@router.post("/{content_item_id}/publication/direct", response_model=ContentItemDetail)
+def record_direct_publication(
+    content_item_id: str,
+    request: RecordDirectPublicationRequest,
+    service: WorkflowService,
+) -> ContentItemDetail:
+    return service.record_direct_publication(
+        content_item_id=content_item_id,
+        version_id=request.version_id,
+        timezone=request.timezone,
+        published_at=request.published_at,
+        post_url=request.post_url,
         confirmation_note=request.confirmation_note,
         idempotency_key=request.idempotency_key,
     )

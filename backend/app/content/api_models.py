@@ -85,6 +85,16 @@ class ConfirmExternalScheduleRequest(ApiModel):
 class MarkPublishedRequest(ApiModel):
     plan_id: str = Field(min_length=1, max_length=128)
     confirmation_note: str | None = Field(default=None, max_length=2_000)
+    post_url: str | None = Field(default=None, max_length=2_000)
+    idempotency_key: str = Field(min_length=8, max_length=128)
+
+
+class RecordDirectPublicationRequest(ApiModel):
+    version_id: str = Field(min_length=1, max_length=128)
+    timezone: str = Field(min_length=1, max_length=100)
+    published_at: datetime | None = None
+    post_url: str | None = Field(default=None, max_length=2_000)
+    confirmation_note: str | None = Field(default=None, max_length=2_000)
     idempotency_key: str = Field(min_length=8, max_length=128)
 
 

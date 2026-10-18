@@ -218,3 +218,34 @@ def test_application_api_supports_review_and_profile_workflow(
     )
     assert profile_response.status_code == 200
     assert client.get("/writing-profile").json()["language"] == "hu"
+
+
+def test_direct_publication_http_route_records_post_link(content_client: tuple[TestClient, Path]) -> None:
+    client, _ = content_client
+    item = client.post("/content-items/ideas", json={"raw_idea": "Rögtön kiposztoltam.",
+                                                      "idempotency_key": "http-direct-idea"}).json()
+    drafted = client.post(f"/content-items/{item['id']}/versions", json={
+        "body": "Jóváhagyott szöveg", "idempotency_key": "http-direct-draft",
+    }).json()
+    version = drafted["versions"][-1]
+    approved = client.post(f"/content-items/{item['id']}/approval", json={
+        "version_id": version["id"], "expected_content_hash": version["content_hash"],
+        "idempotency_key": "http-direct-approve",
+    })
+    assert approved.status_code == 200
+
+    rejected = client.post(f"/content-items/{item['id']}/publication/direct", json={
+        "version_id": version["id"], "timezone": "Europe/Budapest",
+        "post_url": "https://example.com/not-linkedin", "idempotency_key": "http-direct-bad-url",
+    })
+    assert rejected.status_code == 400
+
+    published = client.post(f"/content-items/{item['id']}/publication/direct", json={
+        "version_id": version["id"], "timezone": "Europe/Budapest",
+        "post_url": "https://www.linkedin.com/posts/example-activity-1", "idempotency_key": "http-direct-publish",
+    })
+    assert published.status_code == 200
+    plan = published.json()["publication_plan"]
+    assert plan["status"] == "published"
+    assert plan["post_url"] == "https://www.linkedin.com/posts/example-activity-1"
+    assert plan["published_at"] is not None

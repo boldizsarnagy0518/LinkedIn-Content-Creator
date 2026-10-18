@@ -31,6 +31,7 @@ def test_mcp_tools_advertise_accurate_annotations_and_structured_results(tmp_pat
             "contentops_set_publication_plan",
             "contentops_confirm_external_schedule",
             "contentops_mark_published",
+            "contentops_record_direct_publication",
             "contentops_record_performance_snapshot",
             "contentops_revoke_approval",
             "contentops_archive_content_item",
@@ -43,6 +44,7 @@ def test_mcp_tools_advertise_accurate_annotations_and_structured_results(tmp_pat
         assert tools["contentops_set_publication_plan"].annotations.open_world_hint is False
         assert tools["contentops_confirm_external_schedule"].annotations.open_world_hint is False
         assert tools["contentops_mark_published"].annotations.open_world_hint is False
+        assert tools["contentops_record_direct_publication"].annotations.open_world_hint is False
         assert tools["contentops_record_performance_snapshot"].annotations.open_world_hint is False
         assert tools["contentops_archive_content_item"].annotations.destructive_hint is True
         assert not any(prohibited in tool_name for tool_name in tools for prohibited in ("linkedin", "comment", "like"))

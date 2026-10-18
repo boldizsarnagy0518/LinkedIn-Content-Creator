@@ -189,6 +189,8 @@ class SqlContentRepository:
             timezone TEXT NOT NULL,
             status TEXT NOT NULL,
             external_confirmation_note TEXT,
+            published_at TEXT,
+            post_url TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         );
@@ -231,6 +233,11 @@ class SqlContentRepository:
         """
         with self._connect(write=True) as connection:
             connection.executescript(schema)
+            self._add_missing_columns(
+                connection,
+                "publication_plans",
+                {"published_at": "TEXT", "post_url": "TEXT"},
+            )
             connection.execute(
                 """
                 INSERT INTO writing_profiles
@@ -244,6 +251,21 @@ class SqlContentRepository:
                     _now().isoformat(),
                 ),
             )
+
+    def _add_missing_columns(self, connection: Any, table: str, columns: dict[str, str]) -> None:
+        # Additive upgrade for databases created before a column existed; the names are constants.
+        if self.database_url is not None:
+            rows = connection.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_schema = current_schema() AND table_name = ?",
+                (table,),
+            ).fetchall()
+            existing = {row["column_name"] for row in rows}
+        else:
+            existing = {row["name"] for row in connection.execute(f"PRAGMA table_info({table})").fetchall()}
+        for name, definition in columns.items():
+            if name not in existing:
+                connection.execute(f"ALTER TABLE {table} ADD COLUMN {name} {definition}")
 
     def _replay(
         self,
@@ -728,12 +750,15 @@ class SqlContentRepository:
         plan_id: str,
         confirmation_note: str | None,
         idempotency_key: str,
+        post_url: str | None = None,
     ) -> ContentItemDetail:
         payload = {
             "content_item_id": content_item_id,
             "plan_id": plan_id,
             "confirmation_note": confirmation_note,
         }
+        if post_url is not None:
+            payload["post_url"] = post_url
         with self._connect(write=True) as connection:
             replay = self._replay(connection, "mark_published", idempotency_key, payload, ContentItemDetail)
             if replay is not None:
@@ -749,10 +774,10 @@ class SqlContentRepository:
             connection.execute(
                 """
                 UPDATE publication_plans
-                SET status = ?, external_confirmation_note = ?, updated_at = ?
+                SET status = ?, external_confirmation_note = ?, published_at = ?, post_url = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (PublicationPlanStatus.PUBLISHED.value, note, timestamp, plan_id),
+                (PublicationPlanStatus.PUBLISHED.value, note, timestamp, post_url, timestamp, plan_id),
             )
             connection.execute("UPDATE content_items SET updated_at = ? WHERE id = ?", (timestamp, content_item_id))
             self._record_event(
@@ -764,6 +789,86 @@ class SqlContentRepository:
             )
             result = self._get_content_item(connection, content_item_id)
             self._remember(connection, "mark_published", idempotency_key, payload, result)
+            return result
+
+    def record_direct_publication(
+        self,
+        *,
+        content_item_id: str,
+        version_id: str,
+        published_at: datetime,
+        timezone: str,
+        post_url: str | None,
+        confirmation_note: str | None,
+        idempotency_key: str,
+    ) -> ContentItemDetail:
+        published_at_iso = published_at.isoformat()
+        payload = {
+            "content_item_id": content_item_id,
+            "version_id": version_id,
+            "published_at": published_at_iso,
+            "timezone": timezone,
+            "post_url": post_url,
+            "confirmation_note": confirmation_note,
+        }
+        with self._connect(write=True) as connection:
+            replay = self._replay(connection, "record_direct_publication", idempotency_key, payload, ContentItemDetail)
+            if replay is not None:
+                return replay
+            current = self._get_content_item(connection, content_item_id)
+            if current.current_version_id != version_id or current.active_approval is None:
+                raise ConflictError("Only the currently approved exact draft version can be recorded as published.")
+
+            existing = connection.execute(
+                "SELECT id, status FROM publication_plans WHERE content_item_id = ?",
+                (content_item_id,),
+            ).fetchone()
+            if existing is not None and existing["status"] == PublicationPlanStatus.PUBLISHED.value:
+                raise ConflictError("This content item is already recorded as published.")
+
+            timestamp = _now().isoformat()
+            plan_id = existing["id"] if existing is not None else uuid4().hex
+            # A direct post has no separate intention: the plan row records the confirmed fact itself.
+            connection.execute(
+                """
+                INSERT INTO publication_plans
+                    (id, content_item_id, version_id, planned_for, timezone, status,
+                     external_confirmation_note, published_at, post_url, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(content_item_id) DO UPDATE SET
+                    version_id = excluded.version_id,
+                    planned_for = excluded.planned_for,
+                    timezone = excluded.timezone,
+                    status = excluded.status,
+                    external_confirmation_note = excluded.external_confirmation_note,
+                    published_at = excluded.published_at,
+                    post_url = excluded.post_url,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    plan_id,
+                    content_item_id,
+                    version_id,
+                    published_at_iso,
+                    timezone,
+                    PublicationPlanStatus.PUBLISHED.value,
+                    confirmation_note,
+                    published_at_iso,
+                    post_url,
+                    timestamp,
+                    timestamp,
+                ),
+            )
+            connection.execute("UPDATE content_items SET updated_at = ? WHERE id = ?", (timestamp, content_item_id))
+            self._record_event(
+                connection,
+                content_item_id=content_item_id,
+                event_type="publication_confirmed",
+                details={"plan_id": plan_id, "version_id": version_id, "direct": True},
+                timestamp=timestamp,
+            )
+            result = self._get_content_item(connection, content_item_id)
+            self._remember(connection, "record_direct_publication", idempotency_key, payload, result)
             return result
 
     def get_author_memory(self) -> AuthorMemory:
@@ -1099,6 +1204,10 @@ class SqlContentRepository:
                     timezone=plan_row["timezone"],
                     status=PublicationPlanStatus(plan_row["status"]),
                     external_confirmation_note=plan_row["external_confirmation_note"],
+                    published_at=(
+                        datetime.fromisoformat(plan_row["published_at"]) if plan_row["published_at"] else None
+                    ),
+                    post_url=plan_row["post_url"],
                     created_at=datetime.fromisoformat(plan_row["created_at"]),
                     updated_at=datetime.fromisoformat(plan_row["updated_at"]),
                 )

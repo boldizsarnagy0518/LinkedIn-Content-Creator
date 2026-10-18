@@ -29,7 +29,8 @@ type Props = {
   onRevokeApproval: () => Promise<unknown>;
   onPlan: (plannedFor: string, timezone: string) => Promise<unknown>;
   onConfirmExternal: (note: string) => Promise<unknown>;
-  onMarkPublished: (note?: string) => Promise<unknown>;
+  onMarkPublished: (note?: string, postUrl?: string) => Promise<unknown>;
+  onPublishNow: (postUrl?: string, note?: string) => Promise<unknown>;
   onRecordPerformance: (metrics: {
     impressions?: number;
     reactions?: number;
@@ -178,10 +179,19 @@ function ReviewPanel(props: Props) {
   );
 }
 
+function PostUrlField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return <label>
+    <span>A poszt linkje (nem kötelező)</span>
+    <input type="url" inputMode="url" placeholder="https://www.linkedin.com/..." value={value}
+      onChange={(event) => onChange(event.target.value)} />
+  </label>;
+}
+
 function PublishPanel(props: Props) {
   const [plannedFor, setPlannedFor] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [publicationNote, setPublicationNote] = useState("");
+  const [postUrl, setPostUrl] = useState("");
   const [metrics, setMetrics] = useState({ impressions: "", reactions: "", comments: "", reposts: "", notes: "" });
   const detail = props.detail;
   const current = detail?.versions.at(-1) ?? null;
@@ -199,7 +209,7 @@ function PublishPanel(props: Props) {
         {plan && <PublicationMarker status={plan.status} />}
       </header>
 
-      {!plan || plan.status === "cancelled" ? (
+      {!plan || plan.status === "cancelled" ? (<>
         <form className={styles.inspectorForm} onSubmit={(event) => {
           event.preventDefault();
           if (current) void props.onPlan(new Date(plannedFor).toISOString(), Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -212,7 +222,18 @@ function PublishPanel(props: Props) {
             <CalendarClock size={16} /> Terv mentése
           </button>
         </form>
-      ) : (
+        <form className={styles.inspectorForm} onSubmit={async (event) => {
+          event.preventDefault();
+          const result = await props.onPublishNow(postUrl, publicationNote);
+          if (result) { setPostUrl(""); setPublicationNote(""); }
+        }}>
+          <p className={styles.handoffNote}>Ha terv nélkül, már kiposztoltad a jóváhagyott szöveget, itt rögzítheted.</p>
+          <PostUrlField value={postUrl} onChange={setPostUrl} />
+          <button className={styles.approveButton} disabled={!detail.activeApproval || props.reviewBlocked || props.busy}>
+            <Send size={16} /> Most tettem közzé
+          </button>
+        </form>
+      </>) : (
         <div className={styles.planSummary}>
           <span>{Intl.DateTimeFormat().resolvedOptions().timeZone}</span>
           <strong>{formatDate(plan.plannedFor)}</strong>
@@ -247,18 +268,24 @@ function PublishPanel(props: Props) {
       {(plan?.status === "scheduled_externally" || plan?.status === "planned") && (
         <form className={styles.inspectorForm} onSubmit={async (event) => {
           event.preventDefault();
-          const result = await props.onMarkPublished(publicationNote);
-          if (result) setPublicationNote("");
+          const result = await props.onMarkPublished(publicationNote, postUrl);
+          if (result) { setPublicationNote(""); setPostUrl(""); }
         }}>
           <label>
             <span>Publikálási megjegyzés</span>
             <textarea rows={3} value={publicationNote} onChange={(event) => setPublicationNote(event.target.value)} />
           </label>
+          <PostUrlField value={postUrl} onChange={setPostUrl} />
           <button className={styles.approveButton} disabled={props.busy}>
             <Send size={16} /> Már közzétettem
           </button>
         </form>
       )}
+
+      {published && plan && <p className={styles.handoffNote}>
+        Közzétéve{plan.publishedAt ? `: ${formatDate(plan.publishedAt)}` : ""}
+        {plan.postUrl && <> · <a href={plan.postUrl} target="_blank" rel="noopener noreferrer">Poszt megnyitása</a></>}
+      </p>}
 
       {detail.performanceSnapshots.length > 0 && <div className={styles.snapshotList}>
         <h3>Korábbi eredmények</h3>

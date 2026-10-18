@@ -1,4 +1,5 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import AnyHttpUrl, TypeAdapter, ValidationError
@@ -148,11 +149,7 @@ class ContentWorkflowService:
         timezone: str,
         idempotency_key: str,
     ) -> ContentItemDetail:
-        timezone_name = self._required(timezone, "timezone")
-        try:
-            ZoneInfo(timezone_name)
-        except ZoneInfoNotFoundError as error:
-            raise WorkflowError(f"Unknown IANA timezone: {timezone_name}") from error
+        timezone_name = self._timezone(timezone)
         if planned_for.tzinfo is None or planned_for.utcoffset() is None:
             raise WorkflowError("'planned_for' must include a UTC offset.")
         if planned_for.astimezone(UTC) <= datetime.now(UTC):
@@ -185,10 +182,41 @@ class ContentWorkflowService:
         plan_id: str,
         idempotency_key: str,
         confirmation_note: str | None = None,
+        post_url: str | None = None,
     ) -> ContentItemDetail:
         return self.repository.mark_published(
             content_item_id=self._required(content_item_id, "content_item_id"),
             plan_id=self._required(plan_id, "plan_id"),
+            confirmation_note=self._optional(confirmation_note),
+            post_url=self._linkedin_post_url(post_url),
+            idempotency_key=self._required(idempotency_key, "idempotency_key"),
+        )
+
+    def record_direct_publication(
+        self,
+        content_item_id: str,
+        version_id: str,
+        timezone: str,
+        idempotency_key: str,
+        published_at: datetime | None = None,
+        post_url: str | None = None,
+        confirmation_note: str | None = None,
+    ) -> ContentItemDetail:
+        """Record a post the user already published in LinkedIn without a prior internal plan."""
+        timezone_name = self._timezone(timezone)
+        now = datetime.now(UTC)
+        moment = published_at or now
+        if moment.tzinfo is None or moment.utcoffset() is None:
+            raise WorkflowError("'published_at' must include a UTC offset.")
+        # Allow small clock differences between the user's device and the server.
+        if moment.astimezone(UTC) > now + timedelta(minutes=5):
+            raise WorkflowError("'published_at' cannot be in the future; plan a future post instead.")
+        return self.repository.record_direct_publication(
+            content_item_id=self._required(content_item_id, "content_item_id"),
+            version_id=self._required(version_id, "version_id"),
+            published_at=moment.astimezone(UTC),
+            timezone=timezone_name,
+            post_url=self._linkedin_post_url(post_url),
             confirmation_note=self._optional(confirmation_note),
             idempotency_key=self._required(idempotency_key, "idempotency_key"),
         )
@@ -229,6 +257,34 @@ class ContentWorkflowService:
             return None
         cleaned = value.strip()
         return cleaned or None
+
+    @staticmethod
+    def _timezone(value: str) -> str:
+        timezone_name = ContentWorkflowService._required(value, "timezone")
+        try:
+            ZoneInfo(timezone_name)
+        except ZoneInfoNotFoundError as error:
+            raise WorkflowError(f"Unknown IANA timezone: {timezone_name}") from error
+        return timezone_name
+
+    @staticmethod
+    def _linkedin_post_url(value: str | None) -> str | None:
+        """Validate a user-supplied post link. ContentOps stores it as a reference and never opens it."""
+        cleaned = ContentWorkflowService._optional(value)
+        if cleaned is None:
+            return None
+        parts = urlsplit(cleaned)
+        host = (parts.hostname or "").lower()
+        if (
+            parts.scheme != "https"
+            or parts.username
+            or parts.password
+            or not (host == "linkedin.com" or host.endswith(".linkedin.com"))
+        ):
+            raise WorkflowError("A poszt linkje egy https://www.linkedin.com/... cím legyen.")
+        if len(cleaned) > 2_000:
+            raise WorkflowError("A poszt linkje legfeljebb 2000 karakter lehet.")
+        return cleaned
 
     @staticmethod
     def _derive_title(raw_idea: str) -> str:

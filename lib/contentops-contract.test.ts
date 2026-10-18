@@ -142,6 +142,9 @@ describe("normalizeContentItemDetail", () => {
     expect(detail.currentVersionId).toBe("version-1");
     expect(detail.activeApproval?.contentHash).toBe("a".repeat(64));
     expect(detail.publicationPlan?.status).toBe("planned");
+    // Plans saved before direct publication existed have no publication fields.
+    expect(detail.publicationPlan?.publishedAt).toBeNull();
+    expect(detail.publicationPlan?.postUrl).toBeNull();
     expect(detail.events[0].eventType).toBe("publication_planned");
     expect(detail.performanceSnapshots[0].impressions).toBe(1000);
   });

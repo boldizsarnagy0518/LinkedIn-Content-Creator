@@ -70,12 +70,52 @@ describe("Working copies and review", () => {
     const noop = vi.fn();
     const props = { detail: item("idea-1", ["Szöveg"]), profile: null, busy: false, reviewBlocked: true,
       onRequestChanges: noop, onApprove: noop, onRevokeApproval: noop, onPlan: noop,
-      onConfirmExternal: noop, onMarkPublished: noop, onRecordPerformance: noop, onSaveProfile: noop };
+      onConfirmExternal: noop, onMarkPublished: noop, onPublishNow: noop, onRecordPerformance: noop, onSaveProfile: noop };
     const view = render(<WorkflowInspector {...props} />);
     expect((screen.getByRole("button", { name: "v1 jóváhagyása" }) as HTMLButtonElement).disabled).toBe(true);
     view.rerender(<WorkflowInspector {...props} reviewBlocked={false} />);
     fireEvent.click(screen.getByRole("button", { name: "v1 jóváhagyása" }));
     expect(noop).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Publication", () => {
+  function inspectorProps(overrides: Partial<ReturnType<typeof item>> = {}) {
+    const noop = vi.fn();
+    const detail = { ...item("idea-1", ["Kész szöveg"]), ...overrides };
+    return { detail, profile: null, busy: false, reviewBlocked: false,
+      onRequestChanges: noop, onApprove: noop, onRevokeApproval: noop, onPlan: noop,
+      onConfirmExternal: noop, onMarkPublished: noop, onPublishNow: vi.fn().mockResolvedValue(detail),
+      onRecordPerformance: noop, onSaveProfile: noop };
+  }
+  const approval = { id: "approval-1", contentItemId: "idea-1", versionId: "idea-1-v1",
+    contentHash: "1".repeat(64), approvedAt: "2026-09-08T11:00:00Z" };
+
+  it("records a post published without a plan only after approval", async () => {
+    const unapproved = inspectorProps();
+    const view = render(<WorkflowInspector {...unapproved} />);
+    fireEvent.click(screen.getByRole("button", { name: "Megjelenés" }));
+    expect((screen.getByRole("button", { name: "Most tettem közzé" }) as HTMLButtonElement).disabled).toBe(true);
+
+    const props = inspectorProps({ activeApproval: approval, status: "approved" });
+    view.rerender(<WorkflowInspector {...props} />);
+    const link = "https://www.linkedin.com/posts/example-activity-1";
+    fireEvent.change(screen.getAllByLabelText("A poszt linkje (nem kötelező)")[0], { target: { value: link } });
+    fireEvent.click(screen.getByRole("button", { name: "Most tettem közzé" }));
+    await waitFor(() => expect(props.onPublishNow).toHaveBeenCalledWith(link, ""));
+  });
+
+  it("shows when and where a post was published", () => {
+    const props = inspectorProps({ activeApproval: approval, publicationPlan: {
+      id: "plan-1", contentItemId: "idea-1", versionId: "idea-1-v1", plannedFor: "2026-09-08T12:00:00Z",
+      timezone: "Europe/Budapest", status: "published", externalConfirmationNote: null,
+      publishedAt: "2026-09-08T12:00:00Z", postUrl: "https://www.linkedin.com/posts/example-activity-1",
+      createdAt: "2026-09-08T12:00:00Z", updatedAt: "2026-09-08T12:00:00Z" } });
+    render(<WorkflowInspector {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Megjelenés" }));
+    expect(screen.getByRole("link", { name: "Poszt megnyitása" }).getAttribute("href"))
+      .toBe("https://www.linkedin.com/posts/example-activity-1");
+    expect(screen.queryByRole("button", { name: "Most tettem közzé" })).toBeNull();
   });
 });
 

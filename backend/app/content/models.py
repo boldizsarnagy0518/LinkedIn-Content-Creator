@@ -66,6 +66,8 @@ class PublicationPlan(BaseModel):
     timezone: str
     status: PublicationPlanStatus
     external_confirmation_note: str | None
+    published_at: datetime | None = None
+    post_url: str | None = None
     created_at: datetime
     updated_at: datetime
 

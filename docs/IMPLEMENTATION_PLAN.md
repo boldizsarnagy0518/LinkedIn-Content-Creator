@@ -14,7 +14,8 @@ Build a genuinely useful single-owner content operations tool and a portfolio-qu
 - [x] Add idempotency and audit events to every workflow mutation.
 - [x] Add SQLite and Postgres adapters.
 - [x] Add local mode and Supabase JWT owner authentication.
-- [x] Expose FastAPI routes and 16 model-independent MCP tools.
+- [x] Expose FastAPI routes and 19 model-independent MCP tools.
+- [x] Record a post published right away without a prior plan, with an optional user-supplied LinkedIn link.
 - [x] Add the installable ContentOps skill with research, writing, review, and LinkedIn safety guidance.
 - [x] Replace the prototype UI with an API-backed editorial workspace.
 - [x] Add Supabase SSR auth, same-origin BFF, responsive UI, PWA shell, and workspace export.

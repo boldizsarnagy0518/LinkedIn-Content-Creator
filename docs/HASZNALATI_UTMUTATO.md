@@ -82,6 +82,8 @@ A **vN jóváhagyása** mindig egy konkrét mentett szövegverzióra vonatkozik.
 
 A **Megjelenés** fülön megadhatod a tervezett időpontot. Ez egy belső terv; az alkalmazás nem fog magától posztolni. Másold ki a jóváhagyott változatot, nyisd meg a LinkedInt, és ott végezd el a közzétételt vagy időzítést.
 
+Ha terv nélkül, rögtön kiposztoltad a jóváhagyott szöveget, a **Most tettem közzé** gombbal rögzítheted. Mindkét úton megadhatod a poszt LinkedIn-linkjét is; az alkalmazás ezt csak eltárolja és megjeleníti, sosem nyitja meg vagy olvassa a LinkedInt.
+
 Ezután a ContentOpsban igazold vissza, ami valóban megtörtént:
 
 | Állapot | Jelentés |

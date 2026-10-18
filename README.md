@@ -48,9 +48,9 @@ The Python application service is the use-case boundary. FastAPI and MCP are ada
 - revision feedback and exact-current-version approval;
 - approval revocation and archive state;
 - durable voice, audience, and language profile;
-- internal planning, native-scheduler confirmation, publication confirmation, and manual metrics;
+- internal planning, native-scheduler confirmation, publication confirmation (including a post published right away, without a plan), an optional user-supplied post link, and manual metrics;
 - audit events, idempotent writes, JSON workspace export;
-- 18 MCP tools and a reusable workflow skill;
+- 19 MCP tools and a reusable workflow skill;
 - durable professional background and a curated library of up to 50 authentic past posts, with per-post example selection;
 - SQLite development and Postgres production adapters;
 - local auth mode and Supabase JWT owner verification;

@@ -183,11 +183,31 @@ export async function confirmExternalSchedule(contentItemId: string, planId: str
   );
 }
 
-export async function markPublished(contentItemId: string, planId: string, note?: string) {
+export async function markPublished(contentItemId: string, planId: string, note?: string, postUrl?: string) {
   return normalizeContentItemDetail(
     await request(
       `/content-items/${encodeURIComponent(contentItemId)}/publication-plan/mark-published`,
-      mutation({ plan_id: planId, confirmation_note: note?.trim() || null })
+      mutation({ plan_id: planId, confirmation_note: note?.trim() || null, post_url: postUrl?.trim() || null })
+    )
+  );
+}
+
+export async function recordDirectPublication(
+  contentItemId: string,
+  versionId: string,
+  timezone: string,
+  postUrl?: string,
+  note?: string
+) {
+  return normalizeContentItemDetail(
+    await request(
+      `/content-items/${encodeURIComponent(contentItemId)}/publication/direct`,
+      mutation({
+        version_id: versionId,
+        timezone,
+        post_url: postUrl?.trim() || null,
+        confirmation_note: note?.trim() || null
+      })
     )
   );
 }

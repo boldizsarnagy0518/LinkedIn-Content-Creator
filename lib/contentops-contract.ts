@@ -134,6 +134,8 @@ export function normalizeContentItemDetail(value: unknown): ContentItemDetail {
             planValue.external_confirmation_note ?? planValue.externalConfirmationNote,
             "publication_plan.external_confirmation_note"
           ),
+          publishedAt: readOptionalString(planValue.published_at ?? planValue.publishedAt, "publication_plan.published_at"),
+          postUrl: readOptionalString(planValue.post_url ?? planValue.postUrl, "publication_plan.post_url"),
           createdAt: readString(planValue.created_at ?? planValue.createdAt, "publication_plan.created_at"),
           updatedAt: readString(planValue.updated_at ?? planValue.updatedAt, "publication_plan.updated_at")
         }

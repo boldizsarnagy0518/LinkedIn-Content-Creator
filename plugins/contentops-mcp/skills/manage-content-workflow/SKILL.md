@@ -40,7 +40,7 @@ For the current MVP:
 2. If the user chooses a future time, call `contentops_set_publication_plan` for the approved version. State that this records an internal intention only.
 3. Advise the user to use LinkedIn's native scheduler.
 4. Call `contentops_confirm_external_schedule` only after the user explicitly confirms native scheduling happened; store their confirmation as the note.
-5. Call `contentops_mark_published` only after the user explicitly confirms the post is live.
+5. Call `contentops_mark_published` only after the user explicitly confirms the post is live. If the user already posted the current approved version without a plan, call `contentops_record_direct_publication` instead of inventing a plan. Pass a post link only when the user supplied it; never look it up.
 6. If the user provides post metrics, call `contentops_record_performance_snapshot`. Never imply that ContentOps read LinkedIn; the values are manually supplied observations.
 
 Do not scrape LinkedIn, automate engagement, operate LinkedIn's UI, or infer an external action from an internal plan. If a new draft is saved or changes are requested, treat any previous handoff plan as cancelled and review the new version from the start.

@@ -81,7 +81,8 @@ export function ContentOpsWorkspace({ accountLabel = "Local workspace", authEnab
         onRevokeApproval={() => withDetail((id) => workspace.mutate("Jóváhagyás visszavonva", () => api.revokeApproval(id)))}
         onPlan={(plannedFor, timezone) => current && !reviewBlocked ? withDetail((id) => workspace.mutate("Megjelenés tervezve", () => api.setPublicationPlan(id, current.id, plannedFor, timezone))) : Promise.resolve(null)}
         onConfirmExternal={(note) => plan ? withDetail((id) => workspace.mutate("Időzítés visszaigazolva", () => api.confirmExternalSchedule(id, plan.id, note))) : Promise.resolve(null)}
-        onMarkPublished={(note) => plan ? withDetail((id) => workspace.mutate("Publikálás visszaigazolva", () => api.markPublished(id, plan.id, note))) : Promise.resolve(null)}
+        onMarkPublished={(note, postUrl) => plan ? withDetail((id) => workspace.mutate("Publikálás visszaigazolva", () => api.markPublished(id, plan.id, note, postUrl))) : Promise.resolve(null)}
+        onPublishNow={(postUrl, note) => current && !reviewBlocked ? withDetail((id) => workspace.mutate("Közzététel rögzítve", () => api.recordDirectPublication(id, current.id, Intl.DateTimeFormat().resolvedOptions().timeZone, postUrl, note))) : Promise.resolve(null)}
         onRecordPerformance={(metrics) => withDetail((id) => workspace.mutate("Eredmények elmentve", () => api.recordPerformance(id, metrics)))} onSaveProfile={workspace.saveProfile} />
     </div>
     {workspace.error && <div className={styles.errorToast} role="alert">{workspace.error}</div>}

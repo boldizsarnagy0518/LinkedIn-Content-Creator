@@ -103,6 +103,19 @@ class ContentRepository(Protocol):
         plan_id: str,
         confirmation_note: str | None,
         idempotency_key: str,
+        post_url: str | None = None,
+    ) -> ContentItemDetail: ...
+
+    def record_direct_publication(
+        self,
+        *,
+        content_item_id: str,
+        version_id: str,
+        published_at: datetime,
+        timezone: str,
+        post_url: str | None,
+        confirmation_note: str | None,
+        idempotency_key: str,
     ) -> ContentItemDetail: ...
 
     def record_performance_snapshot(
