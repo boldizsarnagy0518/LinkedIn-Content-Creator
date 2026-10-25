@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-04
 
-Use these prompts after installing the plugin in Codex and again after connecting the remote endpoint in ChatGPT Developer Mode. Record selected tools, arguments, result state, errors, and confirmation behavior.
+Use these prompts in each host: Claude Code with the project `.mcp.json`, Codex with the plugin, and Claude or ChatGPT after connecting the remote endpoint. Record selected tools, arguments, result state, errors, and confirmation behavior.
 
 ## Tool-selection cases
 

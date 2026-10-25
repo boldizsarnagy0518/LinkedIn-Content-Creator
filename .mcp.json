@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "contentops": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--quiet",
+        "--directory",
+        "${CLAUDE_PROJECT_DIR:-.}/backend",
+        "python",
+        "-m",
+        "app.mcp_server",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

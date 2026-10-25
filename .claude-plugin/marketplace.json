@@ -1,0 +1,14 @@
+{
+  "name": "contentops",
+  "description": "ContentOps workflow skill and MCP connection for Claude Code.",
+  "owner": {
+    "name": "ContentOps contributors"
+  },
+  "plugins": [
+    {
+      "name": "contentops-mcp",
+      "source": "./plugins/contentops-mcp",
+      "description": "Capture, draft, review, approve, and hand off content through the ContentOps MCP server."
+    }
+  ]
+}

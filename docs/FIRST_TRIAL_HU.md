@@ -1,6 +1,6 @@
 # Első saját próba – kb. 10 perc
 
-A helyi web: http://127.0.0.1:3000. A háttérben a Python backendnek is futnia kell. A helyi használat nem igazolja az éles ChatGPT-kapcsolatot.
+A helyi web: http://127.0.0.1:3000. A háttérben a Python backendnek is futnia kell. A helyi használat nem igazolja az éles, felhős MCP-kapcsolatot.
 
 ## Előkészítés
 
@@ -16,8 +16,8 @@ A helyi web: http://127.0.0.1:3000. A háttérben a Python backendnek is futnia 
 
 ## A generálás próbája – csak csatlakoztatott MCP-vel
 
-7. A draftkérést másold és küldd el a ContentOpshoz kapcsolt ChatGPT-beszélgetésben. A másolás önmagában nem indít generálást.
-8. Ellenőrizd, hogy a ChatGPT lekérte a writing contextet, és visszamentette az új draftot. A webre visszatérve az új verziónak meg kell jelennie, jóváhagyás nélkül.
+7. Nyiss új Claude Code sessiont a repository mappájában (a `.mcp.json` miatt a ContentOps eszközei automatikusan elérhetők, első alkalommal jóvá kell hagynod a szervert). Másold be a draftkérést, vagy írd egyszerűen: „Van egy ötletem: …”. A másolás önmagában nem indít generálást. Codexszel vagy csatlakoztatott Claude/ChatGPT-beszélgetésben ugyanez működik.
+8. Ellenőrizd, hogy az asszisztens lekérte a writing contextet, és visszamentette az új draftot. A webre visszatérve az új verziónak meg kell jelennie, jóváhagyás nélkül.
 9. Értékeld: felismerhető-e a saját hangod; hű-e az eredeti ötlethez; talált-e ki tapasztalatot vagy tényt; mennyit kellett átírnod?
 
 Ha még nincs saját MCP-kapcsolat, az első hat lépés már tesztelhető. A hetedikhez a `docs/DEPLOYMENT_HU.md` bekötési lépései szükségesek.

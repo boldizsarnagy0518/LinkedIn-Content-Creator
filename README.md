@@ -1,16 +1,16 @@
 # ContentOps
 
-**Magyar útmutatók:** [Használat](docs/HASZNALATI_UTMUTATO.md) · [Telepítés és ChatGPT-bekötés](docs/DEPLOYMENT_HU.md) · [Kitölthető telepítési csomag](deploy/README.md) · [Első próba](docs/FIRST_TRIAL_HU.md).
+**Magyar útmutatók:** [Használat](docs/HASZNALATI_UTMUTATO.md) · [Telepítés, Claude- és ChatGPT-bekötés](docs/DEPLOYMENT_HU.md) · [Kitölthető telepítési csomag](deploy/README.md) · [Első próba](docs/FIRST_TRIAL_HU.md).
 
 ContentOps is a private editorial workspace for turning raw ideas and sourced research into reviewed, versioned LinkedIn drafts. It is both a useful single-owner application and a portfolio project built around production Python, MCP, TypeScript, Supabase, and Vercel.
 
-The application deliberately does **not** contain an LLM provider. ChatGPT or Codex performs research and writing; ContentOps owns durable workflow state, exact-version approval, audit history, and a human-controlled LinkedIn handoff.
+The application deliberately does **not** contain an LLM provider. An MCP host such as Claude Code, Claude, Codex, or ChatGPT performs research and writing; ContentOps owns durable workflow state, exact-version approval, audit history, and a human-controlled LinkedIn handoff.
 
 ## Product flow
 
-For a walking note, choose **Mentés későbbre** to keep only the idea, or **Mentés és draftkérés** to save it and copy a prepared request into your connected ChatGPT conversation. Send that request there: the host reads the saved idea and writing context through MCP, writes the full draft, and saves a new version. The workspace refreshes on focus and every 15 seconds while visible. Review and approval remain explicit user actions.
+For a walking note, choose **Mentés későbbre** to keep only the idea, or **Mentés és draftkérés** to save it and copy a prepared request into a connected MCP host (Claude Code, Claude, Codex, or ChatGPT). Send that request there: the host reads the saved idea and writing context through MCP, writes the full draft, and saves a new version. The workspace refreshes on focus and every 15 seconds while visible. Review and approval remain explicit user actions.
 
-The web button prepares a handoff; it does not start a background ChatGPT job. No model API key or separate model-provider billing is used by this application. A working host MCP connection is required and must be tested in the target account. See [the workflow guide](docs/MCP_IDEA_WORKFLOW.md).
+The web button prepares a handoff; it does not start a background model job. No model API key or separate model-provider billing is used by this application. A working host MCP connection is required and must be tested in the target account. See [the workflow guide](docs/MCP_IDEA_WORKFLOW.md).
 
 ```text
 idea or sourced research
@@ -27,7 +27,7 @@ Approval never publishes a post. ContentOps does not scrape LinkedIn, automate i
 
 ```mermaid
 flowchart LR
-  Host["ChatGPT / Codex"] -->|"MCP tools"| MCP["Python MCP server"]
+  Host["Claude Code / Claude / Codex / ChatGPT"] -->|"MCP tools"| MCP["Python MCP server"]
   Web["Next.js workspace"] -->|"authenticated BFF"| API["FastAPI"]
   MCP --> Domain["ContentWorkflowService"]
   API --> Domain
@@ -82,6 +82,16 @@ cd backend
 uv run python -m app.mcp_server --transport stdio
 ```
 
+### Claude Code
+
+The repository is ready for Claude Code without extra setup:
+
+- `.mcp.json` starts the ContentOps MCP server over stdio (`uv run --directory backend python -m app.mcp_server`), using the same local database as the web workspace. Claude Code asks once to approve this project server.
+- `.claude/skills/manage-content-workflow` points Claude to the shared workflow skill in `plugins/contentops-mcp`.
+- `.claude-plugin/marketplace.json` and `plugins/contentops-mcp/.claude-plugin/plugin.json` also expose the skill as an installable Claude Code plugin; the same folder carries the Codex manifest in `.codex-plugin/`.
+
+Start the API and web, open a new Claude Code session in the repository, and write for example: `Van egy ötletem: …`. The draft appears in the web workspace for review.
+
 Or expose its HTTP transport locally:
 
 ```powershell
@@ -127,7 +137,7 @@ Current automated coverage includes API lifecycle, retry idempotency, concurrent
 
 ## Deployment boundary
 
-Follow [the deployment and ChatGPT setup guide (Hungarian)](docs/DEPLOYMENT_HU.md). It includes the Docker entrypoint, private storage schema, OAuth consent UI, dedicated client registration and resource-bound token hook.
+Follow [the deployment, Claude and ChatGPT setup guide (Hungarian)](docs/DEPLOYMENT_HU.md). It includes the Docker entrypoint, private storage schema, OAuth consent UI, dedicated client registration and resource-bound token hook.
 
 The repository is deployment-ready, but account-owned setup remains external:
 
@@ -135,7 +145,7 @@ The repository is deployment-ready, but account-owned setup remains external:
 2. Deploy the combined Python ASGI application using `backend/Dockerfile`: API at `/api`, MCP at `/mcp`, readiness at `/api/ready`.
 3. Deploy Next.js to Vercel with Supabase variables, server-only owner/client IDs, and the Python backend URL ending in `/api`.
 4. Change `plugins/contentops-mcp/.mcp.json` to the HTTPS MCP endpoint for remote installation.
-5. Run the cases in `docs/MCP_EVALUATION.md` in the target ChatGPT/Codex account.
+5. Run the cases in `docs/MCP_EVALUATION.md` in each target host (Claude Code, Claude, Codex, ChatGPT).
 
 ## Project map
 

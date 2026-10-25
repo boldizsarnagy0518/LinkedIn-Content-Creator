@@ -1,8 +1,12 @@
-# Éles ContentOps: telepítés és ChatGPT-kapcsolat
+# Éles ContentOps: telepítés, Claude- és ChatGPT-kapcsolat
 
 **Előkészített fájlok és ellenőrző parancs:** [deploy/README.md](../deploy/README.md). **Felhasználói útmutató:** [mit mire és hogyan használj](HASZNALATI_UTMUTATO.md).
 
-Az alkalmazás modell-API nélkül működik. A szöveget a ChatGPT készíti; az MCP tárolja és kezeli a munkafolyamatot. A ChatGPT-előfizetés mellett a webes tárhely és az adatbázis külön infrastruktúra. A fiókodban elérhető egyéni MCP/OAuth kapcsolatot a bekötés előtt ellenőrizd.
+Az alkalmazás modell-API nélkül működik. A szöveget egy MCP-host (Claude, Claude Code, Codex vagy ChatGPT) készíti; az MCP tárolja és kezeli a munkafolyamatot. Az AI-előfizetés mellett a webes tárhely és az adatbázis külön infrastruktúra.
+
+Helyi használathoz nem kell telepítés: a Claude Code a repository `.mcp.json` fájljával közvetlenül eléri a helyi szervert. Ez az útmutató a felhős, több eszközről elérhető változatról szól.
+
+**Csomagok (2026. október, a bekötés előtt ellenőrizd újra):** az OpenAI súgója szerint egyéni MCP-szervert ChatGPT-ben csak Business és Enterprise/Edu csomagban, weben lehet bekötni, mobilon nem. Az Anthropic szerint egyéni connector minden Claude-csomagban elérhető (Free csomagban egy darab), és a weben bekötött connector a mobilappban is használható.
 
 ## 1. Supabase: adatbázis és saját belépés
 
@@ -23,10 +27,10 @@ Supabase Authentication → OAuth Server:
 - Engedélyezd az OAuth 2.1 servert.
 - Authorization Path: `/oauth/consent`.
 - URL Configuration → Site URL: `https://WEB_HOST`.
-- Regisztrálj egy dedikált OAuth-klienst a ContentOps ChatGPT-kapcsolatához. Ehhez az implementációhoz **előre regisztrált kliens** kell; dinamikus regisztrációt nem szükséges engedélyezni.
-- Őrizd meg a client ID-t és — bizalmas kliensnél — a client secretet. A secret csak a ChatGPT OAuth-beállításába kell, nem a frontend kódjába.
-- A redirect URI-t a ChatGPT kapcsolatkezelőjében megjelenő **pontos** callback-címre állítsd. Ne találj ki callback ID-t és ne használj wildcardot. Ha a cím csak a kapcsolat felvétele során jelenik meg, a kliens redirect URI-ját akkor véglegesítsd, és indítsd újra a kapcsolódást.
-- A kliens számára engedélyezd a szolgáltató által hirdetett OIDC scope-okat (pl. `openid`, `email`, `profile`), amelyeket a ChatGPT kér.
+- Regisztrálj egy dedikált OAuth-klienst a ContentOps asszisztens-kapcsolatához (Claude és/vagy ChatGPT). Ehhez az implementációhoz **előre regisztrált kliens** kell; dinamikus regisztrációt nem szükséges engedélyezni.
+- Őrizd meg a client ID-t és — bizalmas kliensnél — a client secretet. A secret csak az asszisztens OAuth-beállításába kell, nem a frontend kódjába.
+- A redirect URI-t az asszisztens által megadott **pontos** callback-címre állítsd. Claude-hoz ez jelenleg `https://claude.ai/api/mcp/auth_callback`; ChatGPT-hez a kapcsolatkezelőben megjelenő cím. Ugyanahhoz a klienshez mindkettő felvehető. Ne találj ki callback ID-t és ne használj wildcardot. Ha a cím csak a kapcsolat felvétele során jelenik meg, a kliens redirect URI-ját akkor véglegesítsd, és indítsd újra a kapcsolódást.
+- A kliens számára engedélyezd a szolgáltató által hirdetett OIDC scope-okat (pl. `openid`, `email`, `profile`), amelyeket az asszisztens kér.
 
 ## 3. MCP-token beállítása
 
@@ -85,9 +89,13 @@ A `/api` utótag kötelező az összevont backendnél. A két `NEXT_PUBLIC_` ér
 
 Nyisd meg a webet telefonon, lépj be, ments egy tesztötletet. Asztali böngészőből ugyanazzal a fiókkal belépve látnod kell ugyanazt az ötletet.
 
-## 6. ChatGPT-bekötés és átvételi próba
+## 6. Asszisztens bekötése és átvételi próba
 
-A fiókod egyéni app/plugin/MCP-kapcsolatkezelőjében add meg:
+**Claude (web, asztali és mobilapp):** Customize → Connectors → egyéni connector hozzáadása. URL: `https://BACKEND_HOST/mcp`; az Advanced settings alatt add meg az OAuth client ID-t és secretet. A weben bekötött connectort a mobilapp is használja.
+
+**Claude Code távoli szerverrel:** `claude mcp add --transport http contentops https://BACKEND_HOST/mcp`, majd a `/mcp` paranccsal jelentkezz be. A Claude Code saját, helyi (loopback) callbacket használ.
+
+**ChatGPT:** a fiókod egyéni app/plugin/MCP-kapcsolatkezelőjében add meg:
 
 - MCP URL: `https://BACKEND_HOST/mcp`.
 - Auth: OAuth, az előre regisztrált kliens ID-jával és szükség esetén secretjével.
@@ -97,7 +105,7 @@ Kapcsolódáskor a ContentOps belépési oldalára, majd a **Hozzáférés a mű
 
 Átvételi próba:
 
-1. Kérd a ChatGPT-től a mentett ContentOps-ötletek listázását. A weben létrehozott tesztötletnek meg kell jelennie.
+1. Kérd az asszisztenstől a mentett ContentOps-ötletek listázását. A weben létrehozott tesztötletnek meg kell jelennie.
 2. A weben válaszd a Mentés és draftkérés műveletet. A kérést másold és küldd el a csatlakoztatott beszélgetésben.
 3. Visszatérve a webre meg kell jelennie egy új, még nem jóváhagyott draftnak.
 4. Kérj egy módosítást, ellenőrizd a verziókat, és csak a megfelelő mentett verziót hagyd jóvá.
@@ -111,7 +119,7 @@ Kapcsolódáskor a ContentOps belépési oldalára, majd a **Hozzáférés a mű
 | Web nem éri el az API-t | PYTHON_BACKEND_URL végén `/api`, publikus backend elérhetőség |
 | Bejelentkezés után hozzáférési hiba | Azonos owner UID a két szolgáltatáson |
 | MCP 401 bejelentkezés után | Aktív aszimmetrikus kulcs, tokenhook, pontos MCP URL/audience és client ID |
-| OAuth redirect hiba | ChatGPT által megjelenített pontos callback és Supabase Site URL |
+| OAuth redirect hiba | Az asszisztens pontos callbackje (Claude: `https://claude.ai/api/mcp/auth_callback`) és a Supabase Site URL |
 | MCP 421 vagy Origin hiba | Publikus Host fejléc, MCP_PUBLIC_URL, reverse proxy beállítása |
 | A draft nem érkezik vissza | Ugyanaz a backend/adatbázis, aktív ContentOps kapcsolat, kérés tényleges elküldése |
 
@@ -119,4 +127,4 @@ Kapcsolódáskor a ContentOps belépési oldalára, majd a **Hozzáférés a mű
 
 Helyben tesztelt: összevont ASGI-életciklus, discovery és 401 challenge, tulajdonos-/audience-/kliensellenőrzés, login-visszatérés, consent oldal, readiness. A konténer buildje és az éles Supabase/ChatGPT OAuth-kör ezen a gépen nem futott; telepítés után a fenti átvételi próba szükséges.
 
-A bekötés az [OpenAI Docs OAuth-leírását](https://developers.openai.com/plugins/build/auth), a [Supabase OAuth-beállításait](https://supabase.com/docs/guides/auth/oauth-server/getting-started) és a [Supabase tokenhook dokumentációját](https://supabase.com/docs/guides/auth/oauth-server/token-security) követi. A callbacket mindig az aktuális ChatGPT-felületről másold.
+A bekötés az [OpenAI Docs OAuth-leírását](https://developers.openai.com/plugins/build/auth), a [Supabase OAuth-beállításait](https://supabase.com/docs/guides/auth/oauth-server/getting-started) és a [Supabase tokenhook dokumentációját](https://supabase.com/docs/guides/auth/oauth-server/token-security) követi. A ChatGPT-callbacket mindig az aktuális ChatGPT-felületről másold.

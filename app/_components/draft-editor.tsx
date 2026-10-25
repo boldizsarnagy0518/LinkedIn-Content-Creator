@@ -115,8 +115,8 @@ function DraftDocument(props: Props & { detail: ContentItemDetail }) {
       </div></section>
     </details>
     {!archived && <div className={`${styles.draftHandoff} ${current ? styles.draftHandoffCompact : ""}`}>
-      <div><strong>{current ? "Finomítanád a szöveget?" : "Az ötletből lehet poszt."}</strong><p>{current ? "Szerkeszd itt, vagy add át a visszajelzésedet a ChatGPT-nek." : "Írd meg itt, vagy kérj teljes draftot a csatlakoztatott ChatGPT-beszélgetésben."}</p></div>
-      <button className={styles.secondaryButton} onClick={props.onHandoff} disabled={busy || dirty || conflict || isHistory}><MessageSquareText size={16} /> {current ? "Folytatás ChatGPT-ben" : "Draftkérés ChatGPT-ben"}</button>
+      <div><strong>{current ? "Finomítanád a szöveget?" : "Az ötletből lehet poszt."}</strong><p>{current ? "Szerkeszd itt, vagy add át a visszajelzésedet az AI-asszisztensnek." : "Írd meg itt, vagy kérj teljes draftot a csatlakoztatott AI-asszisztenstől."}</p></div>
+      <button className={styles.secondaryButton} onClick={props.onHandoff} disabled={busy || dirty || conflict || isHistory}><MessageSquareText size={16} /> {current ? "Folytatás AI-asszisztenssel" : "Draftkérés AI-asszisztenstől"}</button>
     </div>}
     {conflict && <div className={styles.conflictBanner} role="status">
       <strong>Új mentett verzió érkezett. A helyi szövegedet megőriztük.</strong>

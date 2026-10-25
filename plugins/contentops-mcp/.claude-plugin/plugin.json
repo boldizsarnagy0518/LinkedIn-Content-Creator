@@ -1,0 +1,11 @@
+{
+  "name": "contentops-mcp",
+  "displayName": "ContentOps",
+  "version": "1.1.0",
+  "description": "Turn ideas and researched briefs into durable, reviewable, approval-safe content workflows.",
+  "author": {
+    "name": "ContentOps contributors"
+  },
+  "repository": "https://github.com/boldizsarnagy0518/LinkedIn-Content-Creator",
+  "keywords": ["content", "writing", "review", "approval", "workflow", "mcp"]
+}

@@ -74,7 +74,7 @@ export function CaptureDialog({ account, busy, error, onClose, onSaved, onCaptur
         <button type="submit" value="later" className={styles.secondaryButton} disabled={!valid || busy}>Mentés későbbre</button>
         <button type="submit" value="draft" className={styles.primaryButton} disabled={!valid || busy}>Mentés és draftkérés</button>
       </footer>
-      <p className={styles.handoffNote}>A draftkérés a ChatGPT-be másolható. A szöveg a csatlakoztatott beszélgetésben készül el.</p>
+      <p className={styles.handoffNote}>A draftkérés a csatlakoztatott AI-asszisztensbe (Claude Code, Claude, Codex vagy ChatGPT) másolható. A szöveg ott készül el.</p>
     </form>
   </Modal>;
 }

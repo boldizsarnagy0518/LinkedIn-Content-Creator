@@ -49,7 +49,7 @@ export function AuthorMemoryDialog({ onClose }: { onClose: () => void }) {
             placeholder="Mivel foglalkozol, milyen tapasztalataid vannak, miről szeretsz írni? Milyen célból posztolsz?"
             onChange={(event) => update({ ...memory, background: event.target.value })} />
         </label>
-        <p className={styles.handoffNote}>Másold be a saját korábbi posztjaidat. A ChatGPT ezekből kap mintát a témáidra, szóhasználatodra és a szövegeid felépítésére. Nem indul külön modellbetanítás.</p>
+        <p className={styles.handoffNote}>Másold be a saját korábbi posztjaidat. Az AI-asszisztens ezekből kap mintát a témáidra, szóhasználatodra és a szövegeid felépítésére. Nem indul külön modellbetanítás.</p>
         {memory.past_posts.map((post, index) => <fieldset key={index} className={styles.memoryPost} disabled={busy}>
           <legend>Korábbi poszt {index + 1}</legend>
           <label><span>Cím</span><input value={post.title} maxLength={160} required onChange={(event) => update({ ...memory, past_posts: memory.past_posts.map((entry, i) => i === index ? { ...entry, title: event.target.value } : entry) })} /></label>

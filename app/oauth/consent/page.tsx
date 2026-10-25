@@ -50,7 +50,7 @@ export default async function ConsentPage({ searchParams }: {
 }) {
   const params = await searchParams;
   const id = params.authorization_id;
-  let message = "Hiányzó vagy érvénytelen kérés. Indítsd újra a kapcsolódást a ChatGPT-ben.";
+  let message = "Hiányzó vagy érvénytelen kérés. Indítsd újra a kapcsolódást az AI-asszisztensben (Claude vagy ChatGPT).";
   let details = null;
   if (validId(id)) {
     const client = await ownerClient(id);
