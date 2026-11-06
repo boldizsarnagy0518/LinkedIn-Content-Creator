@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:local": "next start --hostname 127.0.0.1 --port 3000",
+    "serve:local": "npm run build && npm run start:local",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

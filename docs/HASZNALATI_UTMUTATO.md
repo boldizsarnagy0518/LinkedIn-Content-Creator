@@ -111,9 +111,9 @@ Az **Archiválás** kiveszi a tételt az aktív munkából, az Archívum szűrő
 
 ## 7. Helyi vagy telefonos használat?
 
-Helyben a web és a Python backend is fusson. A `127.0.0.1` cím mindig azt az eszközt jelenti, amelyiken megnyitod: a telefonról ez nem a számítógépedre mutat. A jelenlegi helyi indítás csak a számítógépen érhető el.
+Helyben a web és a Python backend is fusson. A `127.0.0.1` cím mindig azt az eszközt jelenti, amelyiken megnyitod: a telefonról ez nem a számítógépedre mutat. A telefonról felhő nélkül a Tailscale-lel érheted el a gépeden futó appot: lásd a [telefonos útmutatót](TELEFON_TAILSCALE_HU.md).
 
-A stabil, többeszközös használathoz telepítsd a szolgáltatásokat a [telepítési útmutató](DEPLOYMENT_HU.md) alapján. A webet ugyanazzal a tulajdonosi fiókkal használd minden eszközön. Helyben a Claude Code a `.mcp.json` révén azonnal eléri a ContentOpsot; felhős asszisztens (Claude, ChatGPT) csak telepítés után köthető be.
+Ha a gépednek nem kell bekapcsolva lennie, vagy a Claude mobilappot is közvetlenül be akarod kötni, telepítsd a szolgáltatásokat a [telepítési útmutató](DEPLOYMENT_HU.md) alapján. A webet ugyanazzal a tulajdonosi fiókkal használd minden eszközön. Helyben a Claude Code a `.mcp.json` révén azonnal eléri a ContentOpsot; felhős asszisztens (Claude, ChatGPT) csak telepítés után köthető be.
 
 ## Javasolt első saját menet
 
