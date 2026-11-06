@@ -99,3 +99,16 @@ def test_combined_deployment_serves_discovery_challenge_and_api(tmp_path):
         assert authorized.status_code == 200
         assert any(tool["name"] == "contentops_capture_idea" for tool in authorized.json()["result"]["tools"])
     assert started == [True, False]
+
+
+def test_mcp_transport_allows_hosted_claude_and_chatgpt_origins(monkeypatch):
+    from app import mcp_server
+
+    monkeypatch.setattr(mcp_server.settings, "mcp_public_url", "https://api.example.test/mcp")
+    monkeypatch.setattr(mcp_server.settings, "frontend_origin", "https://web.example.test")
+    security = mcp_server.transport_security()
+
+    assert security is not None
+    assert security.allowed_hosts == ["api.example.test"]
+    assert {"https://claude.ai", "https://claude.com", "https://chatgpt.com"} <= set(security.allowed_origins)
+    assert "https://web.example.test" in security.allowed_origins

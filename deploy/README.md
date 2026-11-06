@@ -6,6 +6,8 @@
 | `frontend.env.example` | A Vercelen megadandó beállítások mintája |
 | `supabase-storage.sql` | A privát adattárolási séma létrehozása |
 | `supabase-mcp-token-hook.sql` | A dedikált OAuth-kliens tokenjének MCP-audience beállítása |
+| `deploy-backend-cloudrun.ps1` | Preflight, majd a backend telepítése Google Cloud Runra (titkokat nem ír ki) |
+| `../backend/app/transfer.py` | A helyi munkatér egyszeri átmásolása a felhős adatbázisba |
 | `../backend/Dockerfile` | Az API és MCP közös konténere |
 | `../vercel.json` | A web build- és telepítési konfigurációja |
 
@@ -28,6 +30,6 @@ uv run python -m app.preflight --backend-env ../deploy/backend.env.local --front
 
 A parancs nem csatlakozik a fiókjaidhoz, nem módosít adatokat és nem írja ki a titkos értékeket. A hibás beállítás nevét és a javítás irányát jelzi. A sikeres eredmény konfigurációs egyezést jelent, nem igazolja az OAuth-folyamatot vagy az élő adatbázist.
 
-A teljes, követendő sorrend és a szolgáltatói teendők: [Supabase → backend → Vercel → ChatGPT](../docs/DEPLOYMENT_HU.md).
+A teljes, követendő sorrend és a szolgáltatói teendők: [Google Cloud → Vercel → Supabase → telepítés → Claude](../docs/DEPLOYMENT_HU.md).
 
 A buildbeállítás a [Vercel projektkonfigurációját](https://vercel.com/docs/project-configuration) használja. A backend Docker-build a GitHub Actions ellenőrzésbe is bekerült; eredményét a CI futtatása után lehet igazolni.

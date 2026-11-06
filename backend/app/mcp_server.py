@@ -544,13 +544,21 @@ def _production_auth() -> tuple[AuthSettings | None, TokenVerifier | None]:
     return auth, get_mcp_verifier()
 
 
+# Browser origins of hosted MCP clients that may call this server directly.
+HOSTED_MCP_CLIENT_ORIGINS = ("https://chatgpt.com", "https://claude.ai", "https://claude.com")
+
+
 def transport_security() -> TransportSecuritySettings | None:
     if not settings.mcp_public_url:
         return None
     public = urlsplit(settings.mcp_public_url)
     return TransportSecuritySettings(
         allowed_hosts=[public.netloc],
-        allowed_origins=[f"{public.scheme}://{public.netloc}", settings.frontend_origin, "https://chatgpt.com"],
+        allowed_origins=[
+            f"{public.scheme}://{public.netloc}",
+            settings.frontend_origin,
+            *HOSTED_MCP_CLIENT_ORIGINS,
+        ],
     )
 
 

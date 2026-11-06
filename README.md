@@ -142,7 +142,7 @@ Follow [the deployment, Claude and ChatGPT setup guide (Hungarian)](docs/DEPLOYM
 The repository is deployment-ready, but account-owned setup remains external:
 
 1. Create Supabase Postgres and Auth resources; create the owner account and record its user UUID.
-2. Deploy the combined Python ASGI application using `backend/Dockerfile`: API at `/api`, MCP at `/mcp`, readiness at `/api/ready`.
+2. Deploy the combined Python ASGI application from `backend/Dockerfile` to Google Cloud Run with `deploy/deploy-backend-cloudrun.ps1` (preflight included): API at `/api`, MCP at `/mcp`, readiness at `/api/ready`. Optionally copy the local workspace with `python -m app.transfer`.
 3. Deploy Next.js to Vercel with Supabase variables, server-only owner/client IDs, and the Python backend URL ending in `/api`.
 4. Change `plugins/contentops-mcp/.mcp.json` to the HTTPS MCP endpoint for remote installation.
 5. Run the cases in `docs/MCP_EVALUATION.md` in each target host (Claude Code, Claude, Codex, ChatGPT).
